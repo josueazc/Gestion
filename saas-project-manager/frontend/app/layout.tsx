@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/src/context/AuthContext";
+import { ThemeProvider } from "@/src/context/ThemeProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SaaS Project Manager",
-  description: "Plataforma SaaS con Next.js y Firebase",
+  title: "Gestión — Project Manager",
+  description: "Plataforma SaaS moderna para gestión de proyectos",
 };
 
 export default function RootLayout({
@@ -26,12 +27,15 @@ export default function RootLayout({
   return (
     <html
       lang="es"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col">
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+      <body className="min-h-full antialiased">
+        <ThemeProvider>
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
