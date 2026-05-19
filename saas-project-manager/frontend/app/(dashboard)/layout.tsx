@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Sidebar } from "@/src/components/layout/Sidebar";
 import { Navbar } from "@/src/components/layout/Navbar";
+import { CommandPalette } from "@/src/components/layout/CommandPalette";
 import { cn } from "@/src/lib/utils";
 import { motion } from "framer-motion";
 
@@ -16,6 +17,7 @@ export default function DashboardLayout({
   const { user, loading } = useAuth();
   const router = useRouter();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -23,11 +25,22 @@ export default function DashboardLayout({
     }
   }, [user, loading, router]);
 
+  // ⌘K shortcut
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setCommandPaletteOpen((prev) => !prev);
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   if (loading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
-          {/* Animated Logo */}
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -42,19 +55,13 @@ export default function DashboardLayout({
             transition={{ delay: 0.2 }}
             className="flex flex-col items-center gap-1"
           >
-            <p className="text-sm font-medium text-foreground">
-              Cargando Gestión...
-            </p>
+            <p className="text-sm font-medium text-foreground">Cargando Gestión...</p>
             <div className="mt-2 h-1 w-32 overflow-hidden rounded-full bg-muted">
               <motion.div
                 className="h-full rounded-full bg-primary"
                 initial={{ x: "-100%" }}
                 animate={{ x: "100%" }}
-                transition={{
-                  repeat: Infinity,
-                  duration: 1,
-                  ease: "easeInOut",
-                }}
+                transition={{ repeat: Infinity, duration: 1, ease: "easeInOut" }}
               />
             </div>
           </motion.div>
@@ -67,23 +74,21 @@ export default function DashboardLayout({
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      {/* Sidebar */}
       <Sidebar
         collapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
       />
 
-      {/* Main Content */}
       <div
         className={cn(
           "flex flex-1 flex-col transition-[margin-left] duration-200",
           sidebarCollapsed ? "ml-16" : "ml-64"
         )}
       >
-        {/* Navbar */}
-        <Navbar collapsed={sidebarCollapsed} />
-
-        {/* Page Content */}
+        <Navbar
+          collapsed={sidebarCollapsed}
+          onOpenCommandPalette={() => setCommandPaletteOpen(true)}
+        />
         <main className="flex-1 overflow-y-auto p-6">
           <motion.div
             initial={{ opacity: 0, y: 8 }}
@@ -94,6 +99,12 @@ export default function DashboardLayout({
           </motion.div>
         </main>
       </div>
+
+      {/* Command Palette */}
+      <CommandPalette
+        open={commandPaletteOpen}
+        onClose={() => setCommandPaletteOpen(false)}
+      />
     </div>
   );
 }
