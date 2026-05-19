@@ -1,0 +1,60 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: saas_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: saas_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./backend
+      # Usamos la etapa "deps" en desarrollo para no empaquetar código, solo dependencias base
+      target: deps
+    container_name: saas_backend
+    # Sobrescribimos el comando de producción para iniciar en modo "watch" (hot-reload)
+    command: npm run start:dev
+    ports:
+      - "3001:3001"
+    environment:
+      # Conectamos con el servicio de base de datos dentro de la red de Docker
+      - DATABASE_URL=postgresql://postgres:password@db:5432/saas_db?schema=public
+    volumes:
+      # Sincronizamos el código fuente de tu Mac con el contenedor (Hot Reload)
+      - ./backend:/app
+      # Protegemos el directorio node_modules dentro del contenedor para que tu Mac no lo sobrescriba
+      - /app/node_modules
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: ./frontend
+      target: deps
+    container_name: saas_frontend
+    command: npm run dev
+    ports:
+      - "3000:3000"
+    volumes:
+      # Sincronizamos el código del frontend (Hot Reload para Next.js)
+      - ./frontend:/app
+      # Protegemos node_modules y .next para evitar conflictos Mac/Linux
+      - /app/node_modules
+      - /app/.next
+    environment:
+      # Apuntamos a NestJS a través de localhost porque el navegador resuelve esto desde fuera de Docker
+      - NEXT_PUBLIC_API_URL=http://localhost:3001
+    depends_on:
+      - backend
+
+volumes:
+  # Volumen persistente para que la BD no pierda datos si se reinicia Docker
+  postgres_data:
