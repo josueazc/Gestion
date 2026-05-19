@@ -6,6 +6,7 @@ import { api } from "@/src/services/api";
 import { useAuth } from "@/src/context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/src/lib/utils";
+import { TaskModal } from "@/src/components/projects/TaskModal";
 import {
   Plus,
   GripVertical,
@@ -62,6 +63,8 @@ export default function ProjectDetailPage() {
   const [creatingTask, setCreatingTask] = useState(false);
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [dbUserId, setDbUserId] = useState<string>("");
 
   const fetchData = useCallback(async () => {
     try {
@@ -81,6 +84,12 @@ export default function ProjectDetailPage() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Sync user ID for comments
+  useEffect(() => {
+    if (!user?.email) return;
+    api.post("/users", { email: user.email, id: user.uid }).then((res) => setDbUserId(res.data.id));
+  }, [user]);
 
   const getTasksByColumn = (status: string) =>
     tasks.filter((t) => t.status === status).sort((a, b) => a.order - b.order);
@@ -264,6 +273,7 @@ export default function ProjectDetailPage() {
                       layout
                       draggable
                       onDragStart={() => handleDragStart(task)}
+                      onClick={() => setSelectedTaskId(task.id)}
                       className={cn(
                         "group cursor-grab rounded-lg border border-border bg-card p-3 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 active:cursor-grabbing",
                         draggedTask?.id === task.id && "opacity-50"
@@ -327,6 +337,14 @@ export default function ProjectDetailPage() {
           );
         })}
       </div>
+
+      {/* Task Modal */}
+      <TaskModal
+        taskId={selectedTaskId}
+        userId={dbUserId}
+        onClose={() => setSelectedTaskId(null)}
+        onUpdate={fetchData}
+      />
     </div>
   );
 }

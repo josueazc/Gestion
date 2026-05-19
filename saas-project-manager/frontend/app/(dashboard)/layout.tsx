@@ -7,7 +7,8 @@ import { Sidebar } from "@/src/components/layout/Sidebar";
 import { Navbar } from "@/src/components/layout/Navbar";
 import { CommandPalette } from "@/src/components/layout/CommandPalette";
 import { cn } from "@/src/lib/utils";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { Menu } from "lucide-react";
 
 export default function DashboardLayout({
   children,
@@ -18,6 +19,7 @@ export default function DashboardLayout({
   const router = useRouter();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -35,6 +37,11 @@ export default function DashboardLayout({
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
   }, []);
 
   if (loading) {
@@ -74,22 +81,73 @@ export default function DashboardLayout({
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      <Sidebar
-        collapsed={sidebarCollapsed}
-        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
-      />
+      {/* Desktop Sidebar */}
+      <div className="hidden md:block">
+        <Sidebar
+          collapsed={sidebarCollapsed}
+          onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+        />
+      </div>
+
+      {/* Mobile Sidebar Overlay */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMobileMenuOpen(false)}
+              className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden"
+            />
+            <motion.div
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="fixed left-0 top-0 z-50 md:hidden"
+            >
+              <Sidebar
+                collapsed={false}
+                onToggle={() => setMobileMenuOpen(false)}
+              />
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       <div
         className={cn(
           "flex flex-1 flex-col transition-[margin-left] duration-200",
-          sidebarCollapsed ? "ml-16" : "ml-64"
+          "md:ml-64",
+          sidebarCollapsed && "md:ml-16",
+          "ml-0" // mobile: no margin
         )}
       >
-        <Navbar
-          collapsed={sidebarCollapsed}
-          onOpenCommandPalette={() => setCommandPaletteOpen(true)}
-        />
-        <main className="flex-1 overflow-y-auto p-6">
+        {/* Navbar */}
+        <header
+          className={cn(
+            "sticky top-0 z-30 flex h-14 items-center border-b border-border bg-background/80 backdrop-blur-md"
+          )}
+        >
+          {/* Mobile hamburger */}
+          <button
+            onClick={() => setMobileMenuOpen(true)}
+            className="flex h-14 w-14 items-center justify-center text-muted-foreground hover:text-foreground md:hidden"
+            aria-label="Abrir menú"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+
+          <div className="flex-1">
+            <Navbar
+              collapsed={sidebarCollapsed}
+              onOpenCommandPalette={() => setCommandPaletteOpen(true)}
+            />
+          </div>
+        </header>
+
+        <main className="flex-1 overflow-y-auto p-4 md:p-6">
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -108,3 +166,4 @@ export default function DashboardLayout({
     </div>
   );
 }
+
