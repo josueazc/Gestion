@@ -312,7 +312,7 @@ Consulta el archivo [`ROADMAP.md`](./ROADMAP.md) para ver las funcionalidades pe
 
 ## 👤 Autor
 
-**Josué Aguilar**
+**Josué Azofeifa**
 - GitHub: [@josueazc](https://github.com/josueazc)
 
 ---
