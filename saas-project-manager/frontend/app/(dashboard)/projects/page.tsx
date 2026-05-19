@@ -12,7 +12,9 @@ import {
   Users,
   Loader2,
   X,
+  Trash2,
 } from "lucide-react";
+import { useToast } from "@/src/components/ui/toast";
 
 type Project = {
   id: string;
@@ -38,6 +40,7 @@ export default function ProjectsPage() {
   const [newDesc, setNewDesc] = useState("");
   const [newColor, setNewColor] = useState(PROJECT_COLORS[0]);
   const [creating, setCreating] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!user?.email) return;
@@ -70,10 +73,24 @@ export default function ProjectsPage() {
       setNewName("");
       setNewDesc("");
       setShowCreate(false);
+      toast("Proyecto creado exitosamente");
     } catch (err) {
       console.error(err);
+      toast("Error al crear proyecto", "error");
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleDelete = async (e: React.MouseEvent, projectId: string) => {
+    e.stopPropagation();
+    if (!confirm("¿Eliminar este proyecto y todas sus tareas?")) return;
+    try {
+      await api.delete(`/projects/${projectId}`);
+      setProjects((prev) => prev.filter((p) => p.id !== projectId));
+      toast("Proyecto eliminado");
+    } catch (err) {
+      toast("Error al eliminar proyecto", "error");
     }
   };
 
@@ -225,6 +242,13 @@ export default function ProjectsPage() {
                     </p>
                   )}
                 </div>
+                <button
+                  onClick={(e) => handleDelete(e, project.id)}
+                  className="rounded p-1 text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive transition-all"
+                  aria-label="Eliminar proyecto"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
               </div>
               <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1">

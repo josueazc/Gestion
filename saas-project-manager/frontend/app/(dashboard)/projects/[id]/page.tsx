@@ -7,6 +7,7 @@ import { useAuth } from "@/src/context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/src/lib/utils";
 import { TaskModal } from "@/src/components/projects/TaskModal";
+import { useToast } from "@/src/components/ui/toast";
 import {
   Plus,
   GripVertical,
@@ -54,6 +55,7 @@ export default function ProjectDetailPage() {
   const params = useParams();
   const projectId = params.id as string;
   const { user } = useAuth();
+  const { toast } = useToast();
 
   const [project, setProject] = useState<any>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -109,6 +111,7 @@ export default function ProjectDetailPage() {
       setTasks((prev) => [...prev, res.data]);
       setNewTaskTitle("");
       setNewTaskColumn(null);
+      toast("Tarea creada");
     } catch (err) {
       console.error("Error creating task", err);
     } finally {
